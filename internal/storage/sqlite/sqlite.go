@@ -1,4 +1,4 @@
-package storage
+package sqlite
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/alekslesik/link-shorterer/internal/storage"
-	// "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Storage struct {
@@ -92,3 +92,5 @@ func (s *Storage) GetURL(alias string) (string, error) {
 
     return resURL, nil
 }
+
+//TODO add DeleteURL
