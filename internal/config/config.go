@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	Env         string `yaml:"env" env-default:"development"`
+	Env string `yaml:"env" env-default:"development"`
 	//TODO fix it
 	// StoragePath string `yaml:"storage_path" env-required:"true"`
 	StoragePath string `yaml:"storage_path"`
