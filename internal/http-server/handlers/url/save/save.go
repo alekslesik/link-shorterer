@@ -15,8 +15,6 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-// для краткости даем короткий алиас пакету
-
 type Response struct {
 	resp.Response
 	Alias string `json:"alias,omitempty"`
@@ -34,6 +32,7 @@ type URLSaver interface {
 
 func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Info("POST Request	")
 		const op = "handlers.url.save.New"
 
 		// Добавляем к текущему объекту логгера поля op и request_id

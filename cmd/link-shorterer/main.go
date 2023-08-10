@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"os"
 
 	"github.com/alekslesik/link-shorterer/internal/config"
@@ -39,11 +40,23 @@ func main() {
 	router.Use(middleware.URLFormat) // Парсер URLов поступающих запросов
 
 	//handlers
-	router.Post("/", save.New(log, storage))
+	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("PONG"))
+	})
 
+	router.Post("/", save.New(log, storage))
 	log.Info("initializing server", slog.String("address", cfg.Address))
 	log.Debug("logger debug mode enabled")
 
+	srv := &http.Server{
+		Addr:         cfg.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout,
+		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+	}
+
+	srv.ListenAndServe()
 }
 
 func setupLogger(env string) *slog.Logger {
