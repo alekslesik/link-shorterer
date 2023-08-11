@@ -3,8 +3,11 @@ package main
 import (
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/alekslesik/link-shorterer/internal/config"
+	"github.com/alekslesik/link-shorterer/internal/http-server/handlers/url/redirect"
 	"github.com/alekslesik/link-shorterer/internal/http-server/handlers/url/save"
 	"github.com/alekslesik/link-shorterer/internal/http-server/middleware/logger"
 	"github.com/alekslesik/link-shorterer/internal/lib/logger/sl"
@@ -45,8 +48,14 @@ func main() {
 	})
 
 	router.Post("/", save.New(log, storage))
+	router.Get("/{alias}", redirect.New(log, storage))
+
 	log.Info("initializing server", slog.String("address", cfg.Address))
 	log.Debug("logger debug mode enabled")
+	log.Info("starting server", slog.String("address", cfg.Address))
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	srv := &http.Server{
 		Addr:         cfg.Address,
@@ -56,7 +65,16 @@ func main() {
 		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
 	}
 
-	srv.ListenAndServe()
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			log.Error("failed to start server")
+		}
+	}()
+
+	log.Info("server started")
+
+	<-done
+	log.Info("stopping server")
 }
 
 func setupLogger(env string) *slog.Logger {
@@ -72,4 +90,20 @@ func setupLogger(env string) *slog.Logger {
 	}
 
 	return log
+}
+
+
+//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=URLGetter
+//
+// URLGetter is an interface for getting url by alias.
+type URLGetter interface {
+    GetURL(alias string) (string, error)
+}
+
+func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+		const op = "handlers.url.redirect.New"
+
+
+	}
 }
