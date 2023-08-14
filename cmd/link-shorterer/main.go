@@ -47,8 +47,18 @@ func main() {
 		w.Write([]byte("PONG"))
 	})
 
-	router.Post("/", save.New(log, storage))
 	router.Get("/{alias}", redirect.New(log, storage))
+	// Все пути этого роутера будут начинаться с префикса `/url`
+	router.Route("/url", func(r chi.Router) {
+		r.Use(middleware.BasicAuth("url-shortener", map[string]string{
+			// Передаем в middleware креды
+			cfg.HTTPServer.User: cfg.HTTPServer.Password,
+			// Если у вас более одного пользователя,
+			// то можете добавить остальные пары по аналогии.
+		}))
+
+		r.Post("/", save.New(log, storage))
+	})
 
 	log.Info("initializing server", slog.String("address", cfg.Address))
 	log.Debug("logger debug mode enabled")
@@ -92,18 +102,16 @@ func setupLogger(env string) *slog.Logger {
 	return log
 }
 
-
-//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=URLGetter
-//
 // URLGetter is an interface for getting url by alias.
+//
+//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=URLGetter
 type URLGetter interface {
-    GetURL(alias string) (string, error)
+	GetURL(alias string) (string, error)
 }
 
 func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.url.redirect.New"
-
 
 	}
 }
